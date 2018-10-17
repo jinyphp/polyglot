@@ -63,6 +63,24 @@ trait SHA
     }
 
     /**
+     * 리소스 파일을 삭제합니다.
+     */
+    public function remove($str)
+    {
+        // 파일경로와 파일명을 계산합니다.
+        $filename = $this->filename($str);
+        $key = $this->sha1_path($filename);
+        $this->is_path($this->_path.DIRECTORY_SEPARATOR.$key);
+
+        $filename = $this->_path.DIRECTORY_SEPARATOR.$key.DIRECTORY_SEPARATOR.$filename.".msg";
+
+        if (file_exists($filename)) {
+            // 파일이 존재하는 경우, 삭제함
+            unlink($filename);
+        }
+    }
+
+    /**
      * 
      */
 }
