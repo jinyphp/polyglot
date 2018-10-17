@@ -27,8 +27,7 @@ class Message
         } else {
             $this->initPath();
         }
-
-        //$this->enableTrans("transkey.php");
+        
     }
 
     /**
@@ -36,22 +35,24 @@ class Message
      */
     public function echo($str, $language='str')
     {
-        
+        // 파일이 존재하는 경우
         if ($json = $this->load($str)) {
-            // 파일이 존재하는 경우
+            
             if (isset($json[$language])) {
+                // 언어객체를 반환합니다.
                 $obj = $json[$language];
 
             } else {
                 // 번역과정 처리
                 // 객체로 저장함
                 $text = $this->trans($str, $language);
-                $obj = new \Jiny\Polyglot\Text($text);
+                $obj = $this->factory($text);
                 
                 // 배열 앞에 추가
                 $json[$language]=[];
                 array_unshift($json[$language], $obj);
 
+                // 저장합니다.
                 $this->save($str, $json);
 
             }        
@@ -61,12 +62,13 @@ class Message
             
             // 객체로 저장함
             $text = $this->trans($str, $language);
-            $obj = new \Jiny\Polyglot\Text($text);
+            $obj = $this->factory($text);
 
             // 배열 앞에 추가
             $json[$language]=[];
             array_unshift($json[$language], $obj);
 
+            // 저장합니다.
             $this->save($str, $json);
 
         }
@@ -86,6 +88,11 @@ class Message
 
         // 배열일때
         return $obj[0]['text'];
+    }
+
+    public function factory($text)
+    {
+        return new \Jiny\Polyglot\Text($text);
     }
 
     /**

@@ -11,13 +11,20 @@ namespace Jiny\Polyglot;
 
 trait SHA
 {
+    private $_sha = "sha3-512";
+    
     /**
      * 문자열 해쉬 파일명을 생성합니다.
      */
     public function filename($str)
     {
         //return sha1($str);
-        return hash('sha3-512', $str);
+        return hash($this->_sha, $str);
+    }
+
+    public function setSHA($_sha)
+    {
+        $this->_sha = $_sha;
     }
 
     /**
