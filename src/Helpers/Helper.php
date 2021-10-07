@@ -9,6 +9,16 @@
  * file that was distributed with this source code.
  */
 
+if (! function_exists('polyglot')) {
+    function polyglot($path=null)
+    {
+        return \Jiny\Polyglot\Message::instance($path);
+        //$obj = new \Jiny\Polyglot\Message($path);
+        //return $obj;
+    }
+}
+
+/*
 if (! function_exists('msg_init')) {
     function _msg_init($path=null)
     {
@@ -16,3 +26,4 @@ if (! function_exists('msg_init')) {
         return $obj;
     }
 }
+*/

@@ -1,8 +1,8 @@
 <?php
 
-require 'vendor/autoload.php';
+require '../../../../vendor/autoload.php';
 
-$msg = _msg_init();
+$msg = polyglot();
 $msg->enableTrans("transkey.php");
 
 $str = "오류가 발생하였습니다.";
