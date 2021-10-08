@@ -13,6 +13,8 @@ class Text
     // 작성자
     public $email;
 
+    public $default;
+
     /**
      * 문자열을 초기화 합니다.
      */

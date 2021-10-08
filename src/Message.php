@@ -12,7 +12,7 @@ namespace Jiny\Polyglot;
 class Message
 {
     use Trans;
-    
+
     /**
      * 인스턴스 생성
      */
@@ -38,10 +38,19 @@ class Message
 
     public $_path;
     private $_sha = "sha3-512";
+    public $fromLanguage = "en";
+    public $toLanguage = "ko";
+    
+    private $key;
+    public $trans = [];
+    public $count = 0;
+    public $total = 0;
     
 
-    private function getHistory($json, $language)
+    private function getHistory($json, $language=null)
     {
+        if(!$language) $language = $this->toLanguage;
+
         // 언어객체를 반환합니다.
         if (isset($json[$language])) {
             return $json[$language];
@@ -50,13 +59,24 @@ class Message
         return false;
     }
 
-    private function makeTransText($str, $language)
+    public function makeTransText($str, $language=null, $text=null)
     {
-        // 파일에 번역 기록이 없는 경우,        
-        $text = $this->trans($str, $language);
-        $obj = $this->factory($text); // 새롭게 생성
+        if(!$language) $language = $this->toLanguage;
+
+        if(!$text) {
+            // 구글번역        
+            $text = $this->trans($str, $language);
+            $obj = $this->factory($text); // 새롭게 생성
+            $obj->email = "google";
+        } else {
+            $obj = $this->factory($text); // 새롭게 생성
+        }       
+        
             
-            
+        $json['language'] = $this->fromLanguage;
+        $json['text'] = $str;
+        $json['key'] = $this->key;
+
         $json[$language]=[];
         array_unshift($json[$language], $obj); // 배열 앞에 추가
 
@@ -71,18 +91,33 @@ class Message
     /**
      * 문자열을 반환합니다.
      */
-    public function echo($str, $language='str')
+    public function echo($str, $language=null)
     {
+        $this->total++; // 전체 번역갯수
+        if(!$language) $language = $this->toLanguage;
+
         // 파일이 존재하는 경우
         if ($json = $this->load($str)) {
             $history = $this->getHistory($json, $language);
             if(!$history) {
+                // 번역 기록이 없는 경우
                 $history = $this->makeTransText($str, $language);
-            }            
+            }
+
+            $this->count++; // 번역한 갯수
+
         } else {
-            // 파일이 없는 경우, 새롭게 저장
-            $history = $this->makeTransText($str, $language);
+            // 파일이 없는 경우
+            // 기존 텍스트 반환
+            return $str;
+
+            //새롭게 저장
+            //$history = $this->makeTransText($str, $language);
         }
+
+        
+
+        //
 
 
         // 기록이 1개만 있는 경우
@@ -139,7 +174,6 @@ class Message
     public function setPath($path)
     {
         $this->_path = $path;
-
         $this->is_path($path);
     }
 
@@ -169,6 +203,8 @@ class Message
         $key = substr($sha,0,4).DIRECTORY_SEPARATOR;
         $key .= substr($sha,4,4).DIRECTORY_SEPARATOR;
         $key .= substr($sha,8,4);
+
+        $this->key = $key;
         return $key;
     }
 
@@ -177,7 +213,6 @@ class Message
      */
     public function filename($str)
     {
-        //return sha1($str);
         return hash($this->_sha, $str);
     }
 
@@ -193,13 +228,15 @@ class Message
     {
         $filename = $this->filename($str);
         $key = $this->sha1_path($filename);
-        $this->is_path($this->_path.DIRECTORY_SEPARATOR.$key);
-
-        file_put_contents(
-            $this->_path.DIRECTORY_SEPARATOR.$key.DIRECTORY_SEPARATOR.$filename.".msg", 
-            json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
-        );
-        return $str;
+        if($this->is_path($this->_path.DIRECTORY_SEPARATOR.$key)) {
+            file_put_contents(
+                $this->_path.DIRECTORY_SEPARATOR.$key.DIRECTORY_SEPARATOR.$filename.".msg", 
+                json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)
+            );
+            return $str;
+        }
+        
+        return false;
     }
 
     /**
@@ -210,15 +247,18 @@ class Message
         // 파일경로와 파일명을 계산합니다.
         $filename = $this->filename($str);
         $key = $this->sha1_path($filename);
-        $this->is_path($this->_path.DIRECTORY_SEPARATOR.$key);
+        //if($this->is_path($this->_path.DIRECTORY_SEPARATOR.$key)) {
 
-        $filename = $this->_path.DIRECTORY_SEPARATOR.$key.DIRECTORY_SEPARATOR.$filename.".msg";
+            $filename = $this->_path.DIRECTORY_SEPARATOR.$key.DIRECTORY_SEPARATOR.$filename.".msg";
 
-        if (file_exists($filename)) {
-            // 파일이 존재하는 경우
-            $a = file_get_contents($filename);
-            return json_decode($a, true); // 
-        }
+            if (file_exists($filename)) {
+                // 파일이 존재하는 경우
+                $a = file_get_contents($filename);
+                return json_decode($a, true); // 
+            }
+        //}
+
+        return false;
     }
 
     /**
